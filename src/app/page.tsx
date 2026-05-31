@@ -13,11 +13,6 @@ import UndoToast from "@/components/UndoToast";
 import ThemeToggle from "@/components/ThemeToggle";
 import WeeklyReview from "@/components/WeeklyReview";
 import ExportImport from "@/components/ExportImport";
-import DailyCalorieView from "@/components/DailyCalorieView";
-import CalorieGoalForm from "@/components/CalorieGoalForm";
-import CalorieStats from "@/components/CalorieStats";
-import USDAApiKeySetup from "@/components/USDAApiKeySetup";
-import TestApiKey from "@/components/TestApiKey";
 
 export default function Home() {
   const {
@@ -218,18 +213,6 @@ export default function Home() {
         )}
 
         <WeeklyReview />
-
-        {/* Calorie Tracking Section */}
-        <div className="border-t border-zinc-800 pt-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-zinc-100">Calorie Tracking</h2>
-            <USDAApiKeySetup />
-          </div>
-          <TestApiKey />
-          <CalorieGoalForm />
-          <DailyCalorieView />
-          <CalorieStats />
-        </div>
 
         <StatsPanel />
       </div>
