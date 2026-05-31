@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Habit, FrequencyType } from "@/lib/types";
+import Modal from "./Modal";
 
 const EMOJI_OPTIONS = [
   "📝", "💪", "📚", "🧘", "🏃", "💧", "🎯", "✍️",
@@ -11,14 +12,12 @@ const EMOJI_OPTIONS = [
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface EditHabitModalProps {
-  open: boolean;
   habit: Habit;
   onSave: (updates: Partial<Pick<Habit, "name" | "emoji" | "frequency" | "customDays">>) => void;
   onClose: () => void;
 }
 
 export default function EditHabitModal({
-  open,
   habit,
   onSave,
   onClose,
@@ -27,17 +26,6 @@ export default function EditHabitModal({
   const [emoji, setEmoji] = useState(habit.emoji);
   const [frequency, setFrequency] = useState<FrequencyType>(habit.frequency);
   const [customDays, setCustomDays] = useState<number[]>(habit.customDays || [1, 2, 3, 4, 5]);
-
-  useEffect(() => {
-    if (open) {
-      setName(habit.name);
-      setEmoji(habit.emoji);
-      setFrequency(habit.frequency);
-      setCustomDays(habit.customDays || [1, 2, 3, 4, 5]);
-    }
-  }, [open, habit]);
-
-  if (!open) return null;
 
   const toggleDay = (day: number) => {
     setCustomDays((prev) =>
@@ -57,12 +45,13 @@ export default function EditHabitModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-sm rounded-xl border border-zinc-700 bg-zinc-800 p-6 shadow-xl">
-        <h3 className="text-lg font-semibold text-zinc-100">Edit Habit</h3>
+    <Modal onClose={onClose} labelledBy="edit-habit-title">
+      <h3 id="edit-habit-title" className="text-lg font-semibold text-zinc-100">
+        Edit Habit
+      </h3>
 
-        {/* Name */}
-        <div className="mt-4">
+      {/* Name */}
+      <div className="mt-4">
           <label className="mb-1.5 block text-xs font-medium text-zinc-500">
             Name
           </label>
@@ -157,7 +146,6 @@ export default function EditHabitModal({
             Save
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

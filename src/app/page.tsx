@@ -2,7 +2,7 @@
 
 import { useState, useCallback, DragEvent, useMemo } from "react";
 import { useHabitContext } from "@/context/HabitContext";
-import { getCurrentWeek, toDateKey } from "@/lib/dates";
+import { getCurrentWeek } from "@/lib/dates";
 import AddHabitForm from "@/components/AddHabitForm";
 import CalendarGrid from "@/components/CalendarGrid";
 import HabitRow from "@/components/HabitRow";
@@ -18,7 +18,6 @@ export default function Home() {
   const {
     habits,
     archivedHabits,
-    completions,
     isHydrated,
     undoAction,
     reorderHabits,
@@ -29,11 +28,11 @@ export default function Home() {
     clearUndo,
   } = useHabitContext();
 
-  const dates = getCurrentWeek();
+  const dates = useMemo(() => getCurrentWeek(), []);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [showArchived, setShowArchived] = useState(false);
 
-  // Today's progress
+  // Today's progress (captured on mount; matches the rendered week).
   const today = useMemo(() => new Date(), []);
   const todayCompleted = useMemo(
     () => habits.filter((h) => isCompleted(h.id, today)).length,
@@ -41,22 +40,21 @@ export default function Home() {
   );
   const allDone = habits.length > 0 && todayCompleted === habits.length;
 
-  // Confetti trigger
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [prevAllDone, setPrevAllDone] = useState(false);
-  if (allDone && !prevAllDone) {
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 100);
-  }
+  // Fire confetti once each time the user transitions into "all done".
+  // Detecting the rising edge during render (React's "adjust state on prop
+  // change" pattern) avoids both setState-in-effect and timers-in-render.
+  const [confettiKey, setConfettiKey] = useState(0);
+  const [prevAllDone, setPrevAllDone] = useState(allDone);
   if (allDone !== prevAllDone) {
     setPrevAllDone(allDone);
+    if (allDone) setConfettiKey((k) => k + 1);
   }
 
   const handleDragStart = useCallback((index: number) => {
     setDragIndex(index);
   }, []);
 
-  const handleDragOver = useCallback((e: DragEvent, _index: number) => {
+  const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
   }, []);
 
@@ -72,7 +70,7 @@ export default function Home() {
 
   return (
     <div className="mx-auto min-h-screen max-w-3xl px-4 py-8">
-      <Confetti active={showConfetti} />
+      <Confetti fireKey={confettiKey} />
 
       <header className="mb-8">
         <div className="flex items-center justify-between">

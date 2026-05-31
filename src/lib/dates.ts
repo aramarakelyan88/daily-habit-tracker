@@ -67,6 +67,8 @@ export function calculateCurrentStreak(completedDates: string[]): number {
     const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000));
     if (diffDays === 1) {
       streak++;
+    } else if (diffDays === 0) {
+      continue; // duplicate date, skip
     } else {
       break;
     }

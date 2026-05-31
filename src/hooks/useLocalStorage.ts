@@ -19,6 +19,24 @@ export function useLocalStorage<T>(
       // ignore parse errors
     }
     setIsHydrated(true);
+
+    // Keep multiple open tabs in sync: adopt changes written by other tabs.
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== key) return;
+      if (e.newValue === null) {
+        setValue(defaultValue);
+        return;
+      }
+      try {
+        setValue(JSON.parse(e.newValue));
+      } catch {
+        // ignore parse errors
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+    // defaultValue is intentionally excluded; callers pass a fresh literal each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   const set = useCallback(

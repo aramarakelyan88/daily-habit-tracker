@@ -187,21 +187,23 @@ export default function HabitRow({
         onCancel={() => setConfirmDelete(false)}
       />
 
-      <NoteModal
-        open={noteModal.open}
-        habitName={habit.name}
-        dateLabel={noteModal.dateLabel}
-        initialNote={getNote(habit.id, noteModal.dateKey)}
-        onSave={(note) => addNote(habit.id, noteModal.dateKey, note)}
-        onClose={() => setNoteModal({ open: false, dateKey: "", dateLabel: "" })}
-      />
+      {noteModal.open && (
+        <NoteModal
+          habitName={habit.name}
+          dateLabel={noteModal.dateLabel}
+          initialNote={getNote(habit.id, noteModal.dateKey)}
+          onSave={(note) => addNote(habit.id, noteModal.dateKey, note)}
+          onClose={() => setNoteModal({ open: false, dateKey: "", dateLabel: "" })}
+        />
+      )}
 
-      <EditHabitModal
-        open={editOpen}
-        habit={habit}
-        onSave={(updates) => updateHabit(habit.id, updates)}
-        onClose={() => setEditOpen(false)}
-      />
+      {editOpen && (
+        <EditHabitModal
+          habit={habit}
+          onSave={(updates) => updateHabit(habit.id, updates)}
+          onClose={() => setEditOpen(false)}
+        />
+      )}
     </>
   );
 }

@@ -275,18 +275,20 @@ export function useHabits() {
     (habitId: string): HabitStats => {
       const dates = completions[habitId] || [];
       const habit = habits.find((h) => h.id === habitId);
-      const weekDays = getLastNDays(7).map(toDateKey);
-      const monthDays = getLastNDays(30).map(toDateKey);
+      const weekDates = getLastNDays(7);
+      const monthDates = getLastNDays(30);
 
-      let weekDue = 7;
-      let monthDue = 30;
-      if (habit && habit.frequency !== "daily") {
-        weekDue = getLastNDays(7).filter((d) => isDueOnDate(habit, d)).length;
-        monthDue = getLastNDays(30).filter((d) => isDueOnDate(habit, d)).length;
-      }
-
-      const weekCompleted = weekDays.filter((d) => dates.includes(d)).length;
-      const monthCompleted = monthDays.filter((d) => dates.includes(d)).length;
+      // A day counts toward the rate only if the habit was due on it, so the
+      // numerator and denominator stay consistent (rate can never exceed 100%).
+      const due = (d: Date) => (habit ? isDueOnDate(habit, d) : true);
+      const weekDue = weekDates.filter(due).length;
+      const monthDue = monthDates.filter(due).length;
+      const weekCompleted = weekDates.filter(
+        (d) => due(d) && dates.includes(toDateKey(d))
+      ).length;
+      const monthCompleted = monthDates.filter(
+        (d) => due(d) && dates.includes(toDateKey(d))
+      ).length;
 
       return {
         currentStreak: calculateCurrentStreak(dates),
@@ -318,7 +320,28 @@ export function useHabits() {
     (json: string) => {
       try {
         const data = JSON.parse(json);
-        if (data.habits) setHabits(data.habits);
+        if (!data || typeof data !== "object") return false;
+
+        // Validate shape before overwriting persisted state, so a malformed
+        // or unrelated file can't corrupt the user's habits.
+        const isPlainObject = (v: unknown) =>
+          v != null && typeof v === "object" && !Array.isArray(v);
+
+        const validHabits =
+          Array.isArray(data.habits) &&
+          data.habits.every(
+            (h: unknown) =>
+              isPlainObject(h) &&
+              typeof (h as Habit).id === "string" &&
+              typeof (h as Habit).name === "string"
+          );
+        const validCompletions =
+          data.completions == null || isPlainObject(data.completions);
+        const validNotes = data.notes == null || isPlainObject(data.notes);
+
+        if (!validHabits || !validCompletions || !validNotes) return false;
+
+        setHabits(data.habits);
         if (data.completions) setCompletions(data.completions);
         if (data.notes) setNotes(data.notes);
         return true;

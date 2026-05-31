@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 
 interface Particle {
   id: number;
@@ -12,6 +12,7 @@ interface Particle {
   velocityY: number;
   rotation: number;
   rotationSpeed: number;
+  round: boolean;
 }
 
 const COLORS = [
@@ -25,33 +26,39 @@ const COLORS = [
   "#ec4899",
 ];
 
-export default function Confetti({ active }: { active: boolean }) {
+function createParticles(): Particle[] {
+  const newParticles: Particle[] = [];
+  for (let i = 0; i < 60; i++) {
+    newParticles.push({
+      id: i,
+      x: 50 + (Math.random() - 0.5) * 20,
+      y: 30,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      size: Math.random() * 8 + 4,
+      velocityX: (Math.random() - 0.5) * 6,
+      velocityY: -(Math.random() * 4 + 2),
+      rotation: Math.random() * 360,
+      rotationSpeed: (Math.random() - 0.5) * 10,
+      round: Math.random() > 0.5,
+    });
+  }
+  return newParticles;
+}
+
+export default function Confetti({ fireKey }: { fireKey: number }) {
   const [particles, setParticles] = useState<Particle[]>([]);
 
-  const createParticles = useCallback(() => {
-    const newParticles: Particle[] = [];
-    for (let i = 0; i < 60; i++) {
-      newParticles.push({
-        id: i,
-        x: 50 + (Math.random() - 0.5) * 20,
-        y: 30,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-        size: Math.random() * 8 + 4,
-        velocityX: (Math.random() - 0.5) * 6,
-        velocityY: -(Math.random() * 4 + 2),
-        rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 10,
-      });
-    }
-    setParticles(newParticles);
-  }, []);
-
   useEffect(() => {
-    if (!active) return;
-    createParticles();
-    const timer = setTimeout(() => setParticles([]), 3000);
-    return () => clearTimeout(timer);
-  }, [active, createParticles]);
+    if (fireKey <= 0) return;
+    // Seed and clear on the macrotask queue so the burst is driven entirely
+    // by async callbacks (no synchronous setState inside the effect body).
+    const spawn = setTimeout(() => setParticles(createParticles()), 0);
+    const clear = setTimeout(() => setParticles([]), 3000);
+    return () => {
+      clearTimeout(spawn);
+      clearTimeout(clear);
+    };
+  }, [fireKey]);
 
   useEffect(() => {
     if (particles.length === 0) return;
@@ -86,7 +93,7 @@ export default function Confetti({ active }: { active: boolean }) {
             height: p.size,
             backgroundColor: p.color,
             transform: `rotate(${p.rotation}deg)`,
-            borderRadius: Math.random() > 0.5 ? "50%" : "2px",
+            borderRadius: p.round ? "50%" : "2px",
             opacity: 0.9,
           }}
         />
